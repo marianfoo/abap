@@ -1,0 +1,51 @@
+# This workflow will do a clean install of the dependencies and run tests across different versions
+#
+# Replace <track> with the track name
+# Replace <image-name> with an image to run the jobs on
+# Replace <action to setup tooling> with a github action to setup tooling on the image
+# Replace <install dependencies> with a cli command to install the dependencies
+#
+# Find Github Actions to setup tooling here:
+# - https://github.com/actions/?q=setup&type=&language=
+# - https://github.com/actions/starter-workflows/tree/main/ci
+# - https://github.com/marketplace?type=actions&query=setup
+#
+# Requires scripts:
+# - bin/test
+
+name: test-runner
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ci-runner:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Abap
+        uses: actions/checkout@v2
+      - name: Use Node.js LTS (16.x)
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: Checkout Abap Test Runner
+        uses: actions/checkout@v2
+        with:
+          repository: marianfoo/abap-test-runner
+          path: abap-test-runner
+      - name: Install abap-test-runner
+        run: |
+          cd abap-test-runner
+          npm ci
+          npm run build
+          npm install @abaplint/cli -g
+          npm install @abaplint/transpiler-cli -g
+          npm install @abaplint/runtime -g
+      - name: Run Tests
+        run: |
+              cd abap-test-runner
+              sh ./bin/run-test-exercises.sh ../exercises/practice
